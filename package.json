@@ -1,0 +1,22 @@
+{
+  "name": "gulp-riot-tsref",
+  "version": "1.0.0",
+  "description": "A gulp plugin for riot with TypeScript reference support.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CODEYA/node-gulp-riot-tsref.git"
+  },
+  "keywords": [
+    "gulp",
+    "riot",
+    "gul-riot",
+    "typescript",
+    "d.ts"
+  ],
+  "author": "CODEYA",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CODEYA/node-gulp-riot-tsref/issues"
+  }
+}
