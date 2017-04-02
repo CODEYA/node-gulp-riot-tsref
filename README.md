@@ -128,7 +128,7 @@ Install dev dependencies:
 
 ```bash
 $ npm install
-    ```
+```
 
 Build the gulp-riot-tsref:
 
