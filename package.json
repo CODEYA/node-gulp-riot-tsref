@@ -1,6 +1,6 @@
 {
   "name": "gulp-riot-tsref",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A gulp plugin for riot with TypeScript reference support.",
   "main": "build/index.js",
   "scripts": {
