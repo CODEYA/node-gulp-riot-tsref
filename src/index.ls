@@ -24,7 +24,19 @@ module.exports = (opts = {})->
 
       try
         gutil.log(gutil.colors.grey('Compiling riot tag : ' + file.path))
+        if opts["mode"] == "extract"
+          opts["entities"] = true
+          if(!opts["parserOptions"])
+            opts["parserOptions"]       = {}
+          if(!opts["parserOptions"]["js"])
+            opts["parserOptions"]["js"] = {}
+          opts["parserOptions"]["js"]["mode"] = "extract"
         compiled-code = compile file.contents.to-string!, opts, file.path
+        if opts["mode"] == "extract"
+          if(compiled-code && compiled-code.length > 0 && compiled-code[0]["js"])
+            compiled-code = compiled-code[0]["js"]
+          else
+            compiled-code = ""
       catch err
         return callback new gutil.PluginError \gulp-riot, "#{file.path}: Compiler Error: #{err}"
 
@@ -43,10 +55,21 @@ module.exports = (opts = {})->
 
           });
         """
-
       file.contents = new Buffer compiledCode
       splited-path = file.path.split \.
-      splited-path[*-1] = \js
+      if opts["mode"] === "extract"
+        if opts["type"] === "typescript"
+          splited-path[*-1] = \ts
+        else if opts["type"] === "livescript"
+          splited-path[*-1] = \ls
+        else if opts["type"] === "coffee"
+          splited-path[*-1] = \coffee
+        else if opts["type"] === "coffeescript"
+          splited-path[*-1] = \coffee
+        else
+          splited-path[*-1] = \js
+      else
+        splited-path[*-1] = \js
       file.path = splited-path.join \.
       callback null, file
 
@@ -64,17 +87,20 @@ module.exports = (opts = {})->
       tss = parsers["js"]["typescript"]
       # "tss" をラップする。
       parsers["js"]["typescript"] = (code, options) ->
-        # "<reference>" の置換を行う。
-        code = code.replace REFERENCES, (_m, _attrs, _script) ->
-          refPath = _attrs.replace /^.*?path="([^"]*)".*?$/gi (_m2, _attrs2, _script) ->
-            return (path.resolve _attrs2).toString().trim()
-          try
-            refContents = fs.readFileSync(refPath, 'utf-8')
-            gutil.log(gutil.colors.grey('Referenced file found : ' + refPath))
-          catch err
-            gutil.log(gutil.colors.red('No referenced file found : ' + refPath))
-            return ""
-          return refContents + "\n\n"
-        tss(code, options)
+        if options["mode"] === "extract"
+          return code
+        else
+          # "<reference>" の置換を行う。
+          code = code.replace REFERENCES, (_m, _attrs, _script) ->
+            refPath = _attrs.replace /^.*?path="([^"]*)".*?$/gi (_m2, _attrs2, _script) ->
+              return (path.resolve _attrs2).toString().trim()
+            try
+              refContents = fs.readFileSync(refPath, 'utf-8')
+              gutil.log(gutil.colors.grey('Referenced file found : ' + refPath))
+            catch err
+              gutil.log(gutil.colors.red('No referenced file found : ' + refPath))
+              return ""
+            return refContents + "\n\n"
+          tss(code, options)
 
   through.obj transform
