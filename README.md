@@ -76,8 +76,6 @@ this.sample = new Hoge.Fuga().getMessage();
 </example>
 ```
 
-[NOTE] The path attribute must be absolute path or relative path from the current working directory.
-
 `hoge.d.ts`
 
 ```js
