@@ -24,13 +24,15 @@ module.exports = (opts = {})->
 
       try
         gutil.log(gutil.colors.grey('Compiling riot tag : ' + file.path))
+        if(!opts["parserOptions"])
+          opts["parserOptions"]       = {}
+        if(!opts["parserOptions"]["js"])
+          opts["parserOptions"]["js"] = {}
         if opts["mode"] == "extract"
           opts["entities"] = true
-          if(!opts["parserOptions"])
-            opts["parserOptions"]       = {}
-          if(!opts["parserOptions"]["js"])
-            opts["parserOptions"]["js"] = {}
           opts["parserOptions"]["js"]["mode"] = "extract"
+        else
+          opts["parserOptions"]["js"]["path"] = file.path
         compiled-code = compile file.contents.to-string!, opts, file.path
         if opts["mode"] == "extract"
           if(compiled-code && compiled-code.length > 0 && compiled-code[0]["js"])
@@ -91,9 +93,11 @@ module.exports = (opts = {})->
           return code
         else
           # "<reference>" の置換を行う。
+          tagFile = options["path"]
+          tagDir = path.parse(tagFile).dir
           code = code.replace REFERENCES, (_m, _attrs, _script) ->
             refPath = _attrs.replace /^.*?path="([^"]*)".*?$/gi (_m2, _attrs2, _script) ->
-              return (path.resolve _attrs2).toString().trim()
+              return (path.resolve path.join(tagDir, _attrs2)).toString().trim()
             try
               refContents = fs.readFileSync(refPath, 'utf-8')
               gutil.log(gutil.colors.grey('Referenced file found : ' + refPath))
