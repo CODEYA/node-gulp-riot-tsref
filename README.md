@@ -20,8 +20,11 @@ $ npm install --save-dev gulp-riot-tsref
 # Usage
 
 This plugin compile [riot](https://github.com/muut/riotjs)'s `.tag` files.
+This plugin also extract a script block from `.tag` files.
 
 ## Example
+
+### Mode `extract`
 
 `example.tag`:
 
@@ -30,15 +33,50 @@ This plugin compile [riot](https://github.com/muut/riotjs)'s `.tag` files.
   <p>This is { sample }</p>
 
   <script>
-    /// <reference path="example.d.ts" />
+    /// <reference path="hoge.d.ts" />
     this.sample = new Hoge.Fuga().getMessage();
   </script>
 </example>
 ```
 
-[NOTE] The path attribute must be absolute path or relative path from the current working directory.
+`gulpfile.js`:
 
-`example.d.ts`
+```js
+var gulp = require('gulp');
+var riot = require('gulp-riot-tsref');
+
+gulp.task('riot:extract', function() {
+  return gulp.src('example.tag')
+             .pipe(riot({"mode": "extract"}))
+             .pipe(gulp.dest('dest'));
+});
+```
+
+Run task:
+
+```sh
+% gulp riot:extract
+% cat example.ts
+/// <reference path="hoge.d.ts" />
+this.sample = new Hoge.Fuga().getMessage();
+```
+
+### Mode `compile`
+
+`example.tag`:
+
+```jsx
+<example>
+  <p>This is { sample }</p>
+
+  <script>
+    /// <reference path="hoge.d.ts" />
+    this.sample = new Hoge.Fuga().getMessage();
+  </script>
+</example>
+```
+
+`hoge.d.ts`
 
 ```js
 declare module Hoge {
@@ -54,7 +92,7 @@ declare module Hoge {
 var gulp = require('gulp');
 var riot = require('gulp-riot-tsref');
 
-gulp.task('riot', function() {
+gulp.task('riot:compile', function() {
   return gulp.src('example.tag')
              .pipe(riot())
              .pipe(gulp.dest('dest'));
@@ -64,7 +102,7 @@ gulp.task('riot', function() {
 Run task:
 
 ```sh
-% gulp riot
+% gulp riot:compile
 % cat example.js
 riot.tag('example', '<p>This is { sample }</p>', function(opts) {
   this.sample = new Hoge.Fuga().getMessage();
@@ -85,6 +123,7 @@ This plugin can give riot's compile options.
 
 ### Available option
 
+* mode: `String, compile(default) | extract`
 * compact: `Boolean`
   * Minify `</p> <p>` to `</p><p>`
 * whitespace: `Boolean`
