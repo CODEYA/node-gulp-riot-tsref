@@ -124,6 +124,7 @@ This plugin can give riot's compile options.
 ### Available option
 
 * mode: `String, compile(default) | extract`
+* precompiled: `String, path of directory of precompiled script`
 * compact: `Boolean`
   * Minify `</p> <p>` to `</p><p>`
 * whitespace: `Boolean`

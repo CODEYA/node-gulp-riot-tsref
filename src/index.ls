@@ -20,7 +20,10 @@ module.exports = (opts = {})->
               .for-each (y)-> parsers[x][y] = opts.parsers[x][y]
         delete opts.parsers
 
-      configureTypeScriptCompiler callback
+      if opts["mode"] == "compile" && opts["precompiled"] != null
+        configureTypeScriptMerger callback, opts["precompiled"]
+      else
+        configureTypeScriptCompiler callback
 
       try
         gutil.log(gutil.colors.grey('Compiling riot tag : ' + file.path))
@@ -33,6 +36,7 @@ module.exports = (opts = {})->
           opts["parserOptions"]["js"]["mode"] = "extract"
         else
           opts["parserOptions"]["js"]["path"] = file.path
+          opts["parserOptions"]["js"]["base"] = file.base
         compiled-code = compile file.contents.to-string!, opts, file.path
         if opts["mode"] == "extract"
           if(compiled-code && compiled-code.length > 0 && compiled-code[0]["js"])
@@ -58,25 +62,40 @@ module.exports = (opts = {})->
           });
         """
       file.contents = new Buffer compiledCode
-      splited-path = file.path.split \.
-      if opts["mode"] === "extract"
-        if opts["type"] === "typescript"
-          splited-path[*-1] = \ts
-        else if opts["type"] === "livescript"
-          splited-path[*-1] = \ls
-        else if opts["type"] === "coffee"
-          splited-path[*-1] = \coffee
-        else if opts["type"] === "coffeescript"
-          splited-path[*-1] = \coffee
-        else
-          splited-path[*-1] = \js
-      else
-        splited-path[*-1] = \js
-      file.path = splited-path.join \.
+      file.path = convertTagnameToScriptname file.path
       callback null, file
 
   # TypeScript のコードから "/// <reference />" を切り出す regexp
   REFERENCES = /\/\/\/\s*<reference(\s+[^>]*)?\/>\n?/gi
+
+  # 拡張子を置き換え Tag 名を Script 名に変換する
+  convertTagnameToScriptname = (tagname) ->
+    splited-path = tagname.split \.
+    if opts["mode"] === "extract"
+      if opts["type"] === "typescript"
+        splited-path[*-1] = \ts
+      else if opts["type"] === "livescript"
+        splited-path[*-1] = \ls
+      else if opts["type"] === "coffee"
+        splited-path[*-1] = \coffee
+      else if opts["type"] === "coffeescript"
+        splited-path[*-1] = \coffee
+      else
+        splited-path[*-1] = \js
+    else
+      splited-path[*-1] = \js
+    return splited-path.join \.
+
+  # TypeScript コンパイラーをラップし、precompiled code を利用するようにする。
+  configureTypeScriptMerger = (callback, precompiled) ->
+    # "tss" を置き換える。
+    parsers["js"]["typescript"] = (code, options) ->
+      // precompiled code のパスを作成する。
+      tagFile = convertTagnameToScriptname options["path"]
+      tagBase = options["base"]
+      precompiledTagFile = path.resolve path.join(precompiled, tagFile.replace(tagBase, ""))
+      // precompiled code を返す。
+      return fs.readFileSync(precompiledTagFile, 'utf-8')
 
   # TypeScript コンパイラーをラップし、"<reference>" の置換を行うようにする。
   configureTypeScriptCompiler = (callback) ->
